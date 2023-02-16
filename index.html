@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Ball Runaway</title>
+	<style>
+		body {
+			margin: 0;
+			overflow: hidden;
+		}
+
+		canvas {
+			display: block;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="canvas"></canvas>
+
+	<script>
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext("2d");
+
+		var width = window.innerWidth;
+		var height = window.innerHeight;
+
+		canvas.width = width;
+		canvas.height = height;
+
+
+		const minPoints = 5;
+		const maxPoints = 20;
+		var starCanvas = document.createElement('canvas');
+		var starCtx = starCanvas.getContext('2d');
+		var starSize = 20;
+
+		starCanvas.width = starSize;
+		starCanvas.height = starSize;
+
+		// Draw the star on the starCanvas
+		starCtx.beginPath();
+		starCtx.moveTo(starSize / 2, 0);
+		for (var i = 1; i < minPoints * 2; i++) {
+			var radius = i % 2 == 0 ? starSize / 2 : starSize / 4;
+			var angle = i * Math.PI / minPoints;
+			var x = starSize / 2 + radius * Math.sin(angle);
+			var y = starSize / 2 - radius * Math.cos(angle);
+			starCtx.lineTo(x, y);
+		}
+		starCtx.fillStyle = "#ff0000";
+		starCtx.fill();
+		starCtx.closePath();
+
+		var x = width/2;
+		var y = height/2;
+		var dx = 2;
+		var dy = -2;
+		var ballRadius = 15;
+		var edgeBuffer = 10;
+		var maxSpeed = 5;
+
+		function drawBall() {
+			if (canvas.mouseX && canvas.mouseY) {
+				var mouseX = canvas.mouseX;
+				var mouseY = canvas.mouseY;
+				var xDiff = x - mouseX;
+				var yDiff = y - mouseY;
+				var distance = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+
+				if (distance <= 100) {
+					ctx.drawImage(starCanvas, x - starSize / 2, y - starSize / 2);
+					return;
+				}
+			}
+
+			ctx.beginPath();
+			ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+			ctx.fillStyle = "#0095DD";
+			ctx.fill();
+			ctx.closePath();
+		}
+		function draw() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			drawBall();
+
+			if (canvas.mouseX && canvas.mouseY) {
+				var mouseX = canvas.mouseX;
+				var mouseY = canvas.mouseY;
+				var xDiff = x - mouseX;
+				var yDiff = y - mouseY;
+				var distance = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+				var numPoints = Math.floor((distance / 100) * (maxPoints - minPoints) + minPoints);
+			if (distance > 0) {
+				var angle = Math.atan2(yDiff, xDiff);
+				var ballSpeed = maxSpeed;
+				if ((dx > 0 && xDiff < 0) || (dx < 0 && xDiff > 0) || (dy > 0 && yDiff < 0) || (dy < 0 && yDiff > 0)) {
+					ballSpeed = maxSpeed / 2;
+				} else if (distance > 300) {
+					ballSpeed *= (600 - distance) / 300;
+				} else if (distance <= 100) {
+					
+					ctx.drawImage(starCanvas, x - starSize / 2, y - starSize / 2);
+				} else if (distance > 600) {
+					ballSpeed = 0;
+
+					return;
+				}
+			}
+				dx = ballSpeed * Math.cos(angle);
+				dy = ballSpeed * Math.sin(angle);
+				}
+
+			if (xDiff > 0) {
+				dx = Math.abs(dx);
+			} else if (xDiff < 0) {
+				dx = -Math.abs(dx);
+			}
+
+			if (yDiff > 0) {
+				dy = Math.abs(dy);
+			} else if (yDiff < 0) {
+				dy = -Math.abs(dy);
+			}
+
+			x += dx;
+			y += dy;
+
+			if(x + dx > canvas.width - ballRadius - edgeBuffer) {
+				x = canvas.width - ballRadius - edgeBuffer;
+				dx = -dx;
+			} else if (x + dx < ballRadius + edgeBuffer) {
+				x = ballRadius + edgeBuffer;
+				dx = -dx;
+			}
+
+			if(y + dy > canvas.height - ballRadius - edgeBuffer) {
+				y = canvas.height - ballRadius - edgeBuffer;
+				dy = -dy;
+			} else if (y + dy < ballRadius + edgeBuffer) {
+				y = ballRadius + edgeBuffer;
+				dy = -dy;
+			}
+		}
+
+		canvas.addEventListener('mousemove', function(event) {
+			canvas.mouseX = event.clientX - canvas.offsetLeft;
+			canvas.mouseY = event.clientY - canvas.offsetTop;
+		});
+
+		setInterval(draw, 10);
+	</script>
+</body>
+</html>
