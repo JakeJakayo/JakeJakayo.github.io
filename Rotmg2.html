@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RotMG Fame Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .dungeon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .dungeon-item {
+            background-color: #fff;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        .dungeon-item.selected {
+            background-color: #007BFF;
+            color: #fff;
+        }
+        .fame-bonus-section {
+            margin-top: 20px;
+        }
+        .fame-bonus {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .fame-bonus h2 {
+            margin-top: 0;
+        }
+        .fame-bonus p {
+            margin: 5px 0;
+        }
+		.completed {
+			background-color: #d4edda; /* Light green background */
+			color: #155724; /* Dark green text */
+			border: 1px solid #c3e6cb; /* Green border */
+		}
+    </style>
+</head>
+<body>
+    <h1>RotMG Fame Tracker</h1>
+    
+    <!-- Dungeon Grid Section -->
+    <div class="dungeon-grid" id="dungeonGrid">
+        <div class="dungeon-item" data-dungeon-id="pc">Pirate Cave</div>
+        <div class="dungeon-item" data-dungeon-id="fm">Forest Maze</div>
+        <div class="dungeon-item" data-dungeon-id="sd">Spider Den</div>
+        <div class="dungeon-item" data-dungeon-id="fj">Forbidden Jungle</div>
+        <div class="dungeon-item" data-dungeon-id="th">The Hive</div>
+        <div class="dungeon-item" data-dungeon-id="sp">Snake Pit</div>
+		<div class="dungeon-item" data-dungeon-id="sw">Sprite World</div>
+		<div class="dungeon-item" data-dungeon-id="coatt">Cave of a Thousand Treasures</div>
+        <div class="dungeon-item" data-dungeon-id="ar">Ancient Ruins</div>
+        <div class="dungeon-item" data-dungeon-id="mw">Magic Woods</div>
+        <div class="dungeon-item" data-dungeon-id="chg">Candyland Hunting Grounds</div>
+        <div class="dungeon-item" data-dungeon-id="ul">Undead Lair</div>
+        <div class="dungeon-item" data-dungeon-id="pmt">Puppet Master's Theatre</div>
+		<div class="dungeon-item" data-dungeon-id="ts">Toxic Sewers</div>
+		<div class="dungeon-item" data-dungeon-id="cl">Cursed Library</div>
+		<div class="dungeon-item" data-dungeon-id="ml">Mad Lab</div>
+		<div class="dungeon-item" data-dungeon-id="aod">Abyss Of Demons</div>
+		<div class="dungeon-item" data-dungeon-id="moti">Manor of the Immortals</div>
+		<div class="dungeon-item" data-dungeon-id="hc">Haunted Cemetery</div>
+		<div class="dungeon-item" data-dungeon-id="djl">Davy Jones' Locker</div>
+		<div class="dungeon-item" data-dungeon-id="ic">Ice Cave</div>
+		<div class="dungeon-item" data-dungeon-id="ot">Ocean Trench</div>
+		<div class="dungeon-item" data-dungeon-id="tcd">The Crawling Depths</div>
+		<div class="dungeon-item" data-dungeon-id="wl">Woodland Labyrinth</div>
+		<div class="dungeon-item" data-dungeon-id="dd">Deadwater Docks</div>
+		<div class="dungeon-item" data-dungeon-id="pme">Puppet Master's Encore</div>
+		<div class="dungeon-item" data-dungeon-id="cr">Cnidarian Reef</div>
+		<div class="dungeon-item" data-dungeon-id="swl">Sulfurous Wetlands</div>
+		<div class="dungeon-item" data-dungeon-id="pc2">Parasite Chambers</div>
+		<div class="dungeon-item" data-dungeon-id="mt">Mountain Temple</div>
+		<div class="dungeon-item" data-dungeon-id="lod">Lair of Draconis</div>
+		<div class="dungeon-item" data-dungeon-id="tota">Tomb of the Ancients</div>
+		<div class="dungeon-item" data-dungeon-id="ttd">The Third Dimension</div>
+		<div class="dungeon-item" data-dungeon-id="los">Lair of Shaitan</div>
+		<div class="dungeon-item" data-dungeon-id="st">Secluded Thicket</div>
+		<div class="dungeon-item" data-dungeon-id="htt">High Tech Terror</div>
+		<div class="dungeon-item" data-dungeon-id="tn">The Nest</div>
+		<div class="dungeon-item" data-dungeon-id="ch">Cultist Hideout</div>
+		<div class="dungeon-item" data-dungeon-id="fc">Fungal Cavern</div>
+		<div class="dungeon-item" data-dungeon-id="cc">Crystal Cavern</div>
+		<div class="dungeon-item" data-dungeon-id="ks">Kogbold Steamworks</div>
+		<div class="dungeon-item" data-dungeon-id="lh">Lost Halls</div>
+		<div class="dungeon-item" data-dungeon-id="tv">The Void</div>
+		<div class="dungeon-item" data-dungeon-id="ts">The Shatters</div>
+		<div class="dungeon-item" data-dungeon-id="oc">Oryx's Castle</div>
+		<div class="dungeon-item" data-dungeon-id="oc2">Oryx's Chamber</div>
+		<div class="dungeon-item" data-dungeon-id="os">Oryx's Sanctuary</div>
+		<div class="dungeon-item" data-dungeon-id="wc">Wine Cellar</div>
+		<div class="dungeon-item" data-dungeon-id="m">Malogia</div>
+		<div class="dungeon-item" data-dungeon-id="u">Untaris</div>
+		<div class="dungeon-item" data-dungeon-id="k">Katalund</div>
+		<div class="dungeon-item" data-dungeon-id="f">Forax</div>
+		<div class="dungeon-item" data-dungeon-id="rr">Rainbow Road</div>
+		<div class="dungeon-item" data-dungeon-id="sw">Santas Workshop</div>
+		<div class="dungeon-item" data-dungeon-id="it">Ice Tomb</div>
+		<div class="dungeon-item" data-dungeon-id="bftn">Battle for the Nexus</div>
+		<div class="dungeon-item" data-dungeon-id="mgm">Mad God Mayhem</div>
+		<div class="dungeon-item" data-dungeon-id="bz">Beachzone</div>
+		<div class="dungeon-item" data-dungeon-id="bg">Belladonna's Garden</div>
+		<div class="dungeon-item" data-dungeon-id="tm">The Machine</div>
+    </div>
+    
+    <!-- Fame Bonuses Section -->
+    <div class="fame-bonus-section" id="fameBonuses">
+        <div class="fame-bonus" id="FirstSteps">
+            <h2>First Steps (2.5%, +100)</h2>
+            <p>Still need to complete: <span id="FirstStepsRemaining"></span></p>
+        </div>
+        <div class="fame-bonus" id="KingoftheMountains">
+            <h2>King of the Mountains (+5%, +1000)</h2>
+            <p>Still need to complete: <span id="KingoftheMountainsRemaining"></span></p>
+        </div>
+        <div class="fame-bonus" id="FarOut">
+            <h2>Far Out (5%, +2000)</h2>
+            <p>Still need to complete: <span id="FarOutRemaining"></span></p>
+        </div>
+        <div class="fame-bonus" id="EpicBattles">
+            <h2>Epic Battles (7.5%, +2000)</h2>
+            <p>Still need to complete: <span id="EpicBattlesRemaining"></span></p>
+        </div>
+        <div class="fame-bonus" id="EnemyoftheCourt">
+            <h2>Enemy of the Court (7.5%, +3000)</h2>
+            <p>Still need to complete: <span id="EnemyoftheCourtRemaining"></span></p>
+        </div>
+        <div class="fame-bonus" id="TunnelRat">
+            <h2>Tunnel Rat (7.5%, +3000)</h2>
+            <p>Still need to complete: <span id="TunnelRatRemaining"></span></p>
+        </div>
+        <div class="fame-bonus" id="ExplosiveJourney">
+            <h2>Explosive Journey (7.5%, +3000)</h2>
+            <p>Still need to complete: <span id="ExplosiveJourneyRemaining"></span></p>
+        </div>
+        <div class="fame-bonus" id="ConqueroroftheRealm">
+            <h2>Conqueror of the Realm (+10%, +4000)</h2>
+            <p>Still need to complete: <span id="ConqueroroftheRealmRemaining"></span></p>
+        </div>
+        <div class="fame-bonus" id="TraveloftheDecade">
+            <h2>Travel of the Decade (10%,+5000)</h2>
+            <p>Still need to complete: <span id="TraveloftheDecadeRemaining"></span></p>
+        </div>
+        <div class="fame-bonus" id="HerooftheNexus">
+            <h2>Hero of the Nexus (12.5%, +5000)</h2>
+            <p>Still need to complete: <span id="HerooftheNexusRemaining"></span></p>
+        </div>
+        <div class="fame-bonus" id="SeasonsBeatins">
+            <h2>Season's Beatins (12.5%, +5000)</h2>
+            <p>Still need to complete: <span id="SeasonsBeatinsRemaining"></span></p>
+        </div>
+        <div class="fame-bonus" id="RealmoftheMadGod">
+            <h2>Realm of the Mad God (25%, +10000)</h2>
+            <p>Still need to complete: <span id="RealmoftheMadGodRemaining"></span></p>
+        </div>
+    </div>
+    <script>
+        // Updated dungeonSets to include display names
+        const dungeonSets = {
+            TunnelRat: {
+                name: "Tunnel Rat",
+                dungeons: [
+					{ id: "pc", displayName: "Pirate Cave" },
+					{ id: "fj", displayName: "Forbidden Jungle" },
+					{ id: "sd", displayName: "Spider Den" },
+					{ id: "sp", displayName: "Snake Pit" },
+					{ id: "ul", displayName: "Undead Lair" },
+					{ id: "aod", displayName: "Abyss of Demons" },
+					{ id: "moti", displayName: "Manor of the Immortals" },
+					{ id: "ot", displayName: "Ocean Trench" },
+					{ id: "tota", displayName: "Tomb of the Ancients" },
+					{ id: "oc", displayName: "Oryx’s Castle" },
+					{ id: "oc2", displayName: "Oryx’s Chamber" },
+					{ id: "wc", displayName: "Wine Cellar" }
+                ],
+                bonusElement: document.getElementById("TunnelRatRemaining")
+            },
+			ExplosiveJourney: {
+			name: "Explosive Journey",
+				dungeons: [
+					{ id: "djl", displayName: "Davy Jones’ Locker" },
+					{ id: "ml", displayName: "Mad Lab" },
+					{ id: "chg", displayName: "Candyland Hunting Grounds" },
+					{ id: "hc", displayName: "Haunted Cemetery" },
+					{ id: "coatt", displayName: "Cave of a Thousand Treasures" },
+					{ id: "lod", displayName: "Lair of Draconis" },
+					{ id: "dd", displayName: "Deadwater Docks" },
+					{ id: "wl", displayName: "Woodland Labyrinth" },
+					{ id: "tcd", displayName: "The Crawling Depths" },
+					{ id: "ts", displayName: "The Shatters" },
+					{ id: "los", displayName: "Lair of Shaitan" },
+					{ id: "pmt", displayName: "Puppet Master’s Theatre" },
+					{ id: "ic", displayName: "Ice Cave" }
+				],
+				bonusElement: document.getElementById("ExplosiveJourneyRemaining")
+			},
+			TraveloftheDecade: {
+				name: "Travel of the Decade",
+				dungeons: [
+					{ id: "pme", displayName: "Puppet Master’s Encore" },
+					{ id: "th", displayName: "The Hive" },
+					{ id: "ts", displayName: "Toxic Sewers" },
+					{ id: "mt", displayName: "Mountain Temple" },
+					{ id: "ttd", displayName: "The Third Dimension" },
+					{ id: "tn", displayName: "The Nest" },
+					{ id: "lh", displayName: "Lost Halls" },
+					{ id: "ch", displayName: "Cultist Hideout" },
+					{ id: "tv", displayName: "The Void" },
+					{ id: "cr", displayName: "Cnidarian Reef" },
+					{ id: "pc2", displayName: "Parasite Chambers" },
+					{ id: "mw", displayName: "Magic Woods" },
+					{ id: "st", displayName: "Secluded Thicket" },
+					{ id: "cl", displayName: "Cursed Library" },
+					{ id: "os", displayName: "Oryx’s Sanctuary" },
+					{ id: "ar", displayName: "Ancient Ruins" },
+					{ id: "htt", displayName: "High Tech Terror" },
+					{ id: "sw", displayName: "Sulfurous Wetlands" }
+				],
+				bonusElement: document.getElementById("TraveloftheDecadeRemaining")
+			},
+            FirstSteps: {
+                name: "First Steps",
+                dungeons: [
+					{ id: "pc", displayName: "Pirate Cave" },
+					{ id: "fm", displayName: "Forest Maze" },
+					{ id: "fj", displayName: "Forbidden Jungle" },
+					{ id: "sd", displayName: "Spider Den" },
+					{ id: "th", displayName: "The Hive" }
+                ],
+                bonusElement: document.getElementById("FirstStepsRemaining")
+            },
+			KingoftheMountains: {
+				name: "King of the Mountains",
+				dungeons: [
+					{ id: "sp", displayName: "Snake Pit" },
+					{ id: "sw", displayName: "Sprite World" },
+					{ id: "aod", displayName: "Abyss of Demons" },
+					{ id: "ts", displayName: "Toxic Sewers" },
+					{ id: "ml", displayName: "Mad Lab" },
+					{ id: "mw", displayName: "Magic Woods" },
+					{ id: "pmt", displayName: "Puppet Master’s Theatre" },
+					{ id: "hc", displayName: "Haunted Cemetery" },
+					{ id: "cl", displayName: "Cursed Library" },
+					{ id: "ar", displayName: "Ancient Ruins" },
+					{ id: "sw", displayName: "Sulfurous Wetlands" }
+				],
+				bonusElement: document.getElementById("KingoftheMountainsRemaining")
+			},
+			ConqueroroftheRealm: {
+				name: "Conqueror of the Realm",
+				dungeons: [
+					{ id: "djl", displayName: "Davy Jones’ Locker" },
+					{ id: "ic", displayName: "Ice Cave" },
+					{ id: "lod", displayName: "Lair of Draconis" },
+					{ id: "mt", displayName: "Mountain Temple" },
+					{ id: "ttd", displayName: "The Third Dimension" },
+					{ id: "ot", displayName: "Ocean Trench" },
+					{ id: "tota", displayName: "Tomb of the Ancients" },
+					{ id: "ts", displayName: "The Shatters" },
+					{ id: "tn", displayName: "The Nest" },
+					{ id: "fc", displayName: "Fungal Cavern" },
+					{ id: "cc", displayName: "Crystal Cavern" },
+					{ id: "lh", displayName: "Lost Halls" },
+					{ id: "ks", displayName: "Kogbold Steamworks" }
+				],
+				bonusElement: document.getElementById("ConqueroroftheRealmRemaining")
+			},
+			EnemyoftheCourt: {
+				name: "Enemy of the Court",
+				dungeons: [
+					{ id: "los", displayName: "Lair of Shaitan" },
+					{ id: "pme", displayName: "Puppet Master’s Encore" },
+					{ id: "cr", displayName: "Cnidarian Reef" },
+					{ id: "st", displayName: "Secluded Thicket" },
+					{ id: "htt", displayName: "High Tech Terror" }
+				],
+				bonusElement: document.getElementById("EnemyoftheCourtRemaining")
+			},
+			EpicBattles: {
+				name: "Epic Battles",
+				dungeons: [
+					{ id: "dd", displayName: "Deadwater Docks" },
+					{ id: "wl", displayName: "Woodland Labyrinth" },
+					{ id: "tcd", displayName: "The Crawling Depths" },
+					{ id: "tn", displayName: "The Nest" },
+					{ id: "st", displayName: "Secluded Thicket" }
+				],
+				bonusElement: document.getElementById("EpicBattlesRemaining")
+			},
+		     FarOut: {
+                name: "Far Out",
+                dungeons: [
+					{ id: "m", displayName: "Malogia" },
+					{ id: "u", displayName: "Untaris" },
+					{ id: "f", displayName: "Forax" },
+					{ id: "k", displayName: "Katalund" }
+					],
+		        bonusElement: document.getElementById("FarOutRemaining")
+			},
+			HerooftheNexus: {
+				name: "Hero of the Nexus",
+				dungeons: [
+					{ id: "pc", displayName: "Pirate Cave" },
+					{ id: "fm", displayName: "Forest Maze" },
+					{ id: "sd", displayName: "Spider Den" },
+					{ id: "sp", displayName: "Snake Pit" },
+					{ id: "fj", displayName: "Forbidden Jungle" },
+					{ id: "th", displayName: "The Hive" },
+					{ id: "ar", displayName: "Ancient Ruins" },
+					{ id: "mw", displayName: "Magic Woods" },
+					{ id: "sw", displayName: "Sprite World" },
+					{ id: "chg", displayName: "Candyland Hunting Grounds" },
+					{ id: "coatt", displayName: "Cave of a Thousand Treasures" },
+					{ id: "ul", displayName: "Undead Lair" },
+					{ id: "aod", displayName: "Abyss of Demons" },
+					{ id: "moti", displayName: "Manor of the Immortals" },
+					{ id: "pmt", displayName: "Puppet Master’s Theatre" },
+					{ id: "ts", displayName: "Toxic Sewers" },
+					{ id: "cl", displayName: "Cursed Library" },
+					{ id: "hc", displayName: "Haunted Cemetery" },
+					{ id: "ml", displayName: "Mad Lab" },
+					{ id: "pc2", displayName: "Parasite Chambers" },
+					{ id: "djl", displayName: "Davy Jones’ Locker" },
+					{ id: "mt", displayName: "Mountain Temple" },
+					{ id: "ttd", displayName: "The Third Dimension" },
+					{ id: "lod", displayName: "Lair of Draconis" },
+					{ id: "dd", displayName: "Deadwater Docks" },
+					{ id: "wl", displayName: "Woodland Labyrinth" },
+					{ id: "tcd", displayName: "The Crawling Depths" },
+					{ id: "ot", displayName: "Ocean Trench" },
+					{ id: "ic", displayName: "Ice Cave" },
+					{ id: "tota", displayName: "Tomb of the Ancients" },
+					{ id: "fc", displayName: "Fungal Cavern" },
+					{ id: "cc", displayName: "Crystal Cavern" },
+					{ id: "tn", displayName: "The Nest" },
+					{ id: "ts", displayName: "The Shatters" },
+					{ id: "lh", displayName: "Lost Halls" },
+					{ id: "ch", displayName: "Cultist Hideout" },
+					{ id: "tv", displayName: "The Void" },
+					{ id: "sw", displayName: "Sulfurous Wetlands" },
+					{ id: "ks", displayName: "Kogbold Steamworks" },
+					{ id: "oc", displayName: "Oryx’s Castle" },
+					{ id: "los", displayName: "Lair of Shaitan" },
+					{ id: "pme", displayName: "Puppet Master’s Encore" },
+					{ id: "cr", displayName: "Cnidarian Reef" },
+					{ id: "st", displayName: "Secluded Thicket" },
+					{ id: "htt", displayName: "High Tech Terror" },
+					{ id: "oc2", displayName: "Oryx’s Chamber" },
+					{ id: "wc", displayName: "Wine Cellar" },
+					{ id: "os", displayName: "Oryx’s Sanctuary" }
+				],
+				bonusElement: document.getElementById("HerooftheNexusRemaining")
+			},
+			SeasonsBeatins: {
+				name: "Season's Beatins",
+				dungeons: [
+					{ id: "bg", displayName: "Belladonna’s Garden" },
+					{ id: "it", displayName: "Ice Tomb" },
+					{ id: "mgm", displayName: "Mad God Mayhem" },
+					{ id: "bftn", displayName: "Battle for the Nexus" },
+					{ id: "sw", displayName: "Santa’s Workshop" },
+					{ id: "tm", displayName: "The Machine" },
+					{ id: "m", displayName: "Malogia" },
+					{ id: "u", displayName: "Untaris" },
+					{ id: "f", displayName: "Forax" },
+					{ id: "k", displayName: "Katalund" },
+					{ id: "rr", displayName: "Rainbow Road" },
+					{ id: "bz", displayName: "Beachzone" }
+				],
+				bonusElement: document.getElementById("SeasonsBeatinsRemaining")
+			},
+			RealmofTheMadGod: {
+				name: "Realm of the Mad God",
+				dungeons: [
+					{ id: "pc", displayName: "Pirate Cave" },
+					{ id: "fm", displayName: "Forest Maze" },
+					{ id: "sd", displayName: "Spider Den" },
+					{ id: "sp", displayName: "Snake Pit" },
+					{ id: "fj", displayName: "Forbidden Jungle" },
+					{ id: "th", displayName: "The Hive" },
+					{ id: "ar", displayName: "Ancient Ruins" },
+					{ id: "mw", displayName: "Magic Woods" },
+					{ id: "sw", displayName: "Sprite World" },
+					{ id: "chg", displayName: "Candyland Hunting Grounds" },
+					{ id: "coatt", displayName: "Cave of a Thousand Treasures" },
+					{ id: "ul", displayName: "Undead Lair" },
+					{ id: "aod", displayName: "Abyss of Demons" },
+					{ id: "moti", displayName: "Manor of the Immortals" },
+					{ id: "pmt", displayName: "Puppet Master’s Theatre" },
+					{ id: "ts", displayName: "Toxic Sewers" },
+					{ id: "cl", displayName: "Cursed Library" },
+					{ id: "hc", displayName: "Haunted Cemetery" },
+					{ id: "ml", displayName: "Mad Lab" },
+					{ id: "pc2", displayName: "Parasite Chambers" },
+					{ id: "djl", displayName: "Davy Jones’ Locker" },
+					{ id: "mt", displayName: "Mountain Temple" },
+					{ id: "ttd", displayName: "The Third Dimension" },
+					{ id: "lod", displayName: "Lair of Draconis" },
+					{ id: "dd", displayName: "Deadwater Docks" },
+					{ id: "wl", displayName: "Woodland Labyrinth" },
+					{ id: "tcd", displayName: "The Crawling Depths" },
+					{ id: "ot", displayName: "Ocean Trench" },
+					{ id: "ic", displayName: "Ice Cave" },
+					{ id: "tota", displayName: "Tomb of the Ancients" },
+					{ id: "fc", displayName: "Fungal Cavern" },
+					{ id: "cc", displayName: "Crystal Cavern" },
+					{ id: "tn", displayName: "The Nest" },
+					{ id: "ts", displayName: "The Shatters" },
+					{ id: "lh", displayName: "Lost Halls" },
+					{ id: "ch", displayName: "Cultist Hideout" },
+					{ id: "tv", displayName: "The Void" },
+					{ id: "sw", displayName: "Sulfurous Wetlands" },
+					{ id: "ks", displayName: "Kogbold Steamworks" },
+					{ id: "oc", displayName: "Oryx’s Castle" },
+					{ id: "los", displayName: "Lair of Shaitan" },
+					{ id: "pme", displayName: "Puppet Master’s Encore" },
+					{ id: "cr", displayName: "Cnidarian Reef" },
+					{ id: "st", displayName: "Secluded Thicket" },
+					{ id: "htt", displayName: "High Tech Terror" },
+					{ id: "oc2", displayName: "Oryx’s Chamber" },
+					{ id: "wc", displayName: "Wine Cellar" },
+					{ id: "os", displayName: "Oryx’s Sanctuary" },
+					{ id: "bg", displayName: "Belladonna’s Garden" },
+					{ id: "it", displayName: "Ice Tomb" },
+					{ id: "mgm", displayName: "Mad God Mayhem" },
+					{ id: "bftn", displayName: "Battle for the Nexus" },
+					{ id: "sw", displayName: "Santa’s Workshop" },
+					{ id: "tm", displayName: "The Machine" },
+					{ id: "m", displayName: "Malogia" },
+					{ id: "u", displayName: "Untaris" },
+					{ id: "f", displayName: "Forax" },
+					{ id: "k", displayName: "Katalund" },
+					{ id: "rr", displayName: "Rainbow Road" },
+					{ id: "bz", displayName: "Beachzone" }
+				],
+			   bonusElement: document.getElementById("RealmoftheMadGodRemaining")
+			}
+		};
+        const selectedDungeons = new Set();
+
+        document.querySelectorAll('.dungeon-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const dungeonId = item.getAttribute('data-dungeon-id');
+                if (selectedDungeons.has(dungeonId)) {
+                    selectedDungeons.delete(dungeonId);
+                    item.classList.remove('selected');
+                } else {
+                    selectedDungeons.add(dungeonId);
+                    item.classList.add('selected');
+                }
+                updateFameBonuses();
+            });
+        });
+
+        function updateFameBonuses() {
+            for (let set in dungeonSets) {
+                let remainingDungeons = dungeonSets[set].dungeons
+                    .filter(dungeon => !selectedDungeons.has(dungeon.id))
+                    .map(dungeon => dungeon.displayName);
+                
+                dungeonSets[set].bonusElement.textContent = remainingDungeons.length === 0 
+                    ? "None! Bonus completed!" 
+                    : remainingDungeons.join(", ");
+            }
+        }
+
+        // Initialize with default state
+        updateFameBonuses();
+    </script>
+</body>
+</html>
