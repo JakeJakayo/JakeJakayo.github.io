@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Mini Farm</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #222;
+    color: #eee;
+  }
+  .game-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 10px;
+  }
+  .panel {
+    background: #333;
+    padding: 10px;
+    margin: 5px;
+    border-radius: 8px;
+  }
+  .stats {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+  }
+  .shop {
+    width: 200px;
+  }
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 80px);
+    gap: 8px;
+  }
+  .shop-item {
+    background: #444;
+    padding: 4px;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .shop-item .tile {
+    margin: 0 auto 4px;
+    pointer-events: none;
+  }
+  .shop-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .field {
+    display: grid;
+    grid-template-columns: repeat(3, 50px);
+    grid-template-rows: repeat(3, 50px);
+    gap: 4px;
+  }
+  .tile {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+  }
+  .tile.empty { background: #555; }
+  .tile.soil  { background-color: #d2b48c; }
+  .tile.soil.watered { background-color: #8b5a2b; }
+  .tile.berry, .tile.grape {
+    background-image:
+      repeating-linear-gradient(#5e3a1d 0 2px, transparent 2px 12px),
+      repeating-linear-gradient(to right, #5e3a1d 0 2px, transparent 2px 12px);
+  }
+
+  /* crop sprites drawn with ::after */
+  .tile.wheat.sprout::after,
+  .tile.wheat.growing::after,
+  .tile.wheat.ready::after,
+  .tile.carrot.sprout::after,
+  .tile.carrot.growing::after,
+  .tile.carrot.ready::after,
+  .tile.potato.sprout::after,
+  .tile.potato.growing::after,
+  .tile.potato.ready::after,
+  .tile.corn.sprout::after,
+  .tile.corn.growing::after,
+  .tile.corn.ready::after,
+  .tile.berry.sprout::after,
+  .tile.berry.growing::after,
+  .tile.berry.ready::after,
+  .tile.grape.sprout::after,
+  .tile.grape.growing::after,
+  .tile.grape.ready::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+  }
+  .tile.wheat.sprout::after,
+  .tile.wheat.growing::after,
+  .tile.wheat.ready::after {
+    width: 50px; height: 50px;
+    background-size:10px 10px;
+  }
+  .tile.wheat.sprout::after {
+    background-image: radial-gradient(#c2b280 40%, transparent 41%);
+  }
+  .tile.wheat.growing::after {
+    background-image: radial-gradient(#c2b280 40%, transparent 41%);
+  }
+  .tile.wheat.ready::after {
+    background-image: radial-gradient(#f0e68c 40%, transparent 41%);
+  }
+
+  .tile.carrot.sprout::after {
+    width: 6px; height: 6px; background: #228b22; border-radius: 50%;
+  }
+  .tile.carrot.growing::after {
+    width: 18px; height: 18px; background: #ff8c00; border-radius: 50%;
+  }
+  .tile.carrot.ready::after {
+    width: 24px; height: 24px; background: #ffa500; border-radius: 50%;
+  }
+  .tile.carrot.growing::before,
+  .tile.carrot.ready::before {
+    content:"";
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:#228b22;
+    border-radius:50%;
+    z-index:1;
+  }
+  .tile.carrot.growing::before { width:6px; height:6px; }
+  .tile.carrot.ready::before { width:8px; height:8px; }
+
+  .tile.potato.sprout::after {
+    width: 6px; height: 6px; background: #6b8e23; border-radius: 50%;
+  }
+  .tile.potato.growing::after {
+    width: 16px; height: 16px; background: #8b4513; border-radius: 50%;
+    background-image:
+      radial-gradient(#5c3317 20%, transparent 21%),
+      radial-gradient(#5c3317 20%, transparent 21%);
+    background-position:4px 6px, 10px 10px;
+    background-size:5px 5px;
+  }
+  .tile.potato.ready::after {
+    width: 22px; height: 22px; background: #deb887; border-radius: 50%;
+    background-image:
+      radial-gradient(#cdaa7d 20%, transparent 21%),
+      radial-gradient(#cdaa7d 20%, transparent 21%),
+      radial-gradient(#cdaa7d 20%, transparent 21%);
+    background-position:6px 8px, 12px 14px, 14px 4px;
+    background-size:6px 6px;
+  }
+
+  .tile.corn.sprout::after {
+    width: 6px; height: 6px; background: #228b22; border-radius: 50%;
+  }
+  .tile.corn.growing::after {
+    width: 16px; height: 16px;
+    background: repeating-linear-gradient(to right, #ffd700 0 3px, #ffea00 3px 6px);
+    border-radius:2px;
+  }
+  .tile.corn.ready::after {
+    width: 22px; height: 22px;
+    background: repeating-linear-gradient(to right, #ffc700 0 3px, #ffec8b 3px 6px);
+    border-radius:2px;
+  }
+
+  .tile.berry.sprout::after {
+    width: 8px; height: 8px; background: #2e8b57; border-radius:50%;
+  }
+  .tile.berry.growing::after {
+    width: 20px; height: 20px;
+    background:
+      radial-gradient(circle at 4px 4px, #8a2be2 0 3px, transparent 3px),
+      radial-gradient(circle at 16px 4px, #8a2be2 0 3px, transparent 3px),
+      radial-gradient(circle at 4px 16px, #8a2be2 0 3px, transparent 3px),
+      radial-gradient(circle at 16px 16px, #8a2be2 0 3px, transparent 3px);
+  }
+  .tile.berry.ready::after {
+    width: 24px; height: 24px;
+    background:
+      radial-gradient(circle at 4px 4px, #9400d3 0 4px, transparent 4px),
+      radial-gradient(circle at 12px 4px, #9400d3 0 4px, transparent 4px),
+      radial-gradient(circle at 20px 4px, #9400d3 0 4px, transparent 4px),
+      radial-gradient(circle at 4px 12px, #9400d3 0 4px, transparent 4px),
+      radial-gradient(circle at 12px 12px, #9400d3 0 4px, transparent 4px),
+      radial-gradient(circle at 20px 12px, #9400d3 0 4px, transparent 4px),
+      radial-gradient(circle at 4px 20px, #9400d3 0 4px, transparent 4px),
+      radial-gradient(circle at 12px 20px, #9400d3 0 4px, transparent 4px),
+      radial-gradient(circle at 20px 20px, #9400d3 0 4px, transparent 4px);
+  }
+
+  .tile.grape.sprout::after {
+    width: 8px; height: 8px; background: #3cb371; border-radius:50%;
+  }
+  .tile.grape.growing::after {
+    width: 20px; height: 20px;
+    background:
+      radial-gradient(circle at 10px 10px, #9932cc 0 4px, transparent 4px),
+      radial-gradient(circle at 16px 4px, #9932cc 0 4px, transparent 4px),
+      radial-gradient(circle at 4px 16px, #9932cc 0 4px, transparent 4px),
+      radial-gradient(circle at 4px 4px, #9932cc 0 4px, transparent 4px),
+      radial-gradient(circle at 16px 16px, #9932cc 0 4px, transparent 4px);
+  }
+  .tile.grape.ready::after {
+    width: 24px; height: 24px;
+    background:
+      radial-gradient(circle at 4px 4px, #6a0dad 0 4px, transparent 4px),
+      radial-gradient(circle at 12px 4px, #6a0dad 0 4px, transparent 4px),
+      radial-gradient(circle at 20px 4px, #6a0dad 0 4px, transparent 4px),
+      radial-gradient(circle at 4px 12px, #6a0dad 0 4px, transparent 4px),
+      radial-gradient(circle at 12px 12px, #6a0dad 0 4px, transparent 4px),
+      radial-gradient(circle at 20px 12px, #6a0dad 0 4px, transparent 4px),
+      radial-gradient(circle at 4px 20px, #6a0dad 0 4px, transparent 4px),
+      radial-gradient(circle at 12px 20px, #6a0dad 0 4px, transparent 4px),
+      radial-gradient(circle at 20px 20px, #6a0dad 0 4px, transparent 4px);
+  }
+
+  .tile.arrow { background: #555; }
+  .tile.arrow::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    font-size: 24px;
+    color: #eee;
+  }
+  .tile.arrow.horizontal::after { content: '\2194'; }
+  .tile.arrow.vertical::after { content: '\2195'; }
+
+
+  .toolbar { margin: 10px 0; }
+  .toolbar button { margin: 2px; }
+  .toolbar button.active { background: #888; }
+
+  button {
+    background: #555;
+    color: #eee;
+    border: none;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover { background: #666; }
+
+  .log {
+    background: #222;
+    color: #ccc;
+    flex: 1;
+    margin-top: 10px;
+    padding: 5px;
+    overflow: auto;
+    height: 120px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  @media (max-width: 800px) {
+    .game-container { flex-direction: column; align-items: center; }
+    .stats, .shop { width: 90%; }
+    .field { margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+<div class="game-container">
+  <!-- Stats + Toolbar + Log -->
+  <div class="panel stats">
+    <h2>Farm</h2>
+    <div>Coins: <span id="coins">0</span></div>
+    <div>Wheat Seeds: <span id="wSeeds">0</span></div>
+    <div>Carrot Seeds: <span id="cSeeds">0</span></div>
+    <div>Potato Seeds: <span id="pSeeds">0</span></div>
+    <div>Corn Seeds: <span id="coSeeds">0</span></div>
+    <div>Berry Seeds: <span id="bSeeds">0</span></div>
+    <div>Grape Seeds: <span id="gSeeds">0</span></div>
+    <div>Time: <span id="clock">0</span></div>
+
+    <div class="toolbar">
+      <button id="digBtn">Dig</button>
+      <button id="plantWBtn">Plant Wheat</button>
+      <button id="plantCBtn">Plant Carrot</button>
+      <button id="plantPoBtn">Plant Potato</button>
+      <button id="plantCoBtn">Plant Corn</button>
+      <button id="plantBBtn">Plant Berry</button>
+      <button id="plantGBtn">Plant Grape</button>
+      <button id="harvestBtn">Harvest</button>
+      <button id="fertBtn">Fertilize (-4)</button>
+      <button id="waterBtn">Water</button>
+      <button id="clearBtn">Clear</button>
+      <button id="sellBtn">Sell Ready</button>
+    </div>
+
+    <button id="resetBtn">Hard Reset</button>
+    <div class="log" id="log"></div>
+  </div>
+
+  <!-- Field -->
+  <div class="panel field" id="field"></div>
+
+  <!-- Shop -->
+  <div class="panel shop">
+    <h2>Shop</h2>
+    <div class="shop-grid">
+      <div class="shop-item" data-crop="wheat" title="Sell price: 6 coins">
+        <div class="tile soil wheat ready"></div>
+        <div class="label">Wheat (5)</div>
+      </div>
+      <div class="shop-item" data-crop="carrot" title="Sell price: 12 coins">
+        <div class="tile soil carrot ready"></div>
+        <div class="label">Carrot (9)</div>
+      </div>
+      <div class="shop-item" data-crop="potato" title="Sell price: 8 coins">
+        <div class="tile soil potato ready"></div>
+        <div class="label">Potato (6)</div>
+      </div>
+      <div class="shop-item" data-crop="corn" title="Sell price: 20 coins">
+        <div class="tile soil corn ready"></div>
+        <div class="label">Corn (15)</div>
+      </div>
+      <div class="shop-item" data-crop="berry" title="Sell price: 5 coins">
+        <div class="tile soil berry ready"></div>
+        <div class="label">Berry (10)</div>
+      </div>
+      <div class="shop-item" data-crop="grape" title="Sell price: 15 coins">
+        <div class="tile soil grape ready"></div>
+        <div class="label">Grape (20)</div>
+      </div>
+      <div class="shop-item expand" id="buyRow" title="Cost: 20 coins">
+        <div class="tile arrow horizontal"></div>
+        <div class="label">Row (<span id="rowCost">20</span>)</div>
+      </div>
+      <div class="shop-item expand" id="buyCol" title="Cost: 20 coins">
+        <div class="tile arrow vertical"></div>
+        <div class="label">Column (<span id="colCost">20</span>)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== Game Data ===================== */
+let fieldWidth = 3;
+let fieldHeight = 3;
+let rowCost = 20;
+let colCost = 20;
+
+// Crop definitions
+const CROPS = {
+  wheat:  { time: 40,  sell: 6,  seedCost: 5,  recur: false },
+  carrot: { time: 70,  sell: 12, seedCost: 9,  recur: false },
+  potato: { time: 50,  sell: 8,  seedCost: 6,  recur: false },
+  corn:   { time: 90,  sell: 20, seedCost: 15, recur: false },
+  berry:  { time: 60,  sell: 5,  seedCost: 10, recur: true  },
+  grape:  { time: 100, sell: 15, seedCost: 20, recur: true  }
+};
+
+// Game state (loaded or default)
+let coins  = 12;
+let seeds  = { wheat: 2, carrot: 0, potato: 0, corn: 0, berry: 0, grape: 0 };
+let tiles  = [];
+let gameTime = 0;
+let currentTool = 'dig'; // default tool
+
+// DOM references
+const fieldEl = document.getElementById('field');
+const coinsEl = document.getElementById('coins');
+const wSeedsEl = document.getElementById('wSeeds');
+const cSeedsEl = document.getElementById('cSeeds');
+const pSeedsEl = document.getElementById('pSeeds');
+const coSeedsEl = document.getElementById('coSeeds');
+const bSeedsEl = document.getElementById('bSeeds');
+const gSeedsEl = document.getElementById('gSeeds');
+const clockEl = document.getElementById('clock');
+const logEl   = document.getElementById('log');
+const tileElems = []; // tile DOM cache
+const rowItem = document.getElementById('buyRow');
+const colItem = document.getElementById('buyCol');
+const rowCostSpan = document.getElementById('rowCost');
+const colCostSpan = document.getElementById('colCost');
+
+/* ===================== Utilities ===================== */
+
+// Add message to activity log
+function addLog(msg) {
+  const time = new Date().toLocaleTimeString();
+  const div = document.createElement('div');
+  div.textContent = `${time} - ${msg}`;
+  logEl.prepend(div);
+  while (logEl.childElementCount > 20) logEl.removeChild(logEl.lastChild);
+}
+
+// Update stats display
+function updateStats() {
+  coinsEl.textContent = coins;
+  wSeedsEl.textContent = seeds.wheat;
+  cSeedsEl.textContent = seeds.carrot;
+  pSeedsEl.textContent = seeds.potato;
+  coSeedsEl.textContent = seeds.corn;
+  bSeedsEl.textContent = seeds.berry;
+  gSeedsEl.textContent = seeds.grape;
+  updateExpansionButtons();
+}
+
+function updateExpansionButtons() {
+  rowCostSpan.textContent = rowCost;
+  colCostSpan.textContent = colCost;
+  rowItem.title = `Cost: ${rowCost} coins`;
+  colItem.title = `Cost: ${colCost} coins`;
+  rowItem.classList.toggle('disabled', coins < rowCost || fieldHeight >= 10);
+  colItem.classList.toggle('disabled', coins < colCost || fieldWidth >= 10);
+}
+
+// Format clock display
+function formatTime(sec) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+
+/* ===================== Field Rendering ===================== */
+
+// Build field DOM and initialize tile data
+function createField() {
+  fieldEl.innerHTML = '';
+  tileElems.length = 0;
+  fieldEl.style.gridTemplateColumns = `repeat(${fieldWidth}, 50px)`;
+  fieldEl.style.gridTemplateRows = `repeat(${fieldHeight}, 50px)`;
+
+  for (let i=0; i<fieldWidth*fieldHeight; i++) {
+    const tile = tiles[i] || { state:'empty', crop:null, progress:0, watered:false };
+    tile.watered = tile.watered || false;
+    tiles[i] = tile;
+
+    const el = document.createElement('div');
+    el.classList.add('tile','empty');
+    el.dataset.index = i;
+    el.addEventListener('click', () => handleTileClick(i));
+    fieldEl.appendChild(el);
+    tileElems.push(el);
+
+    renderTile(i);
+  }
+}
+
+// Update a tile's appearance based on its state
+function renderTile(i) {
+  const tile = tiles[i];
+  const el = tileElems[i];
+  el.className = 'tile';
+
+  if (tile.state === 'empty') { el.classList.add('empty'); return; }
+  if (tile.state === 'soil')  { el.classList.add('soil');  return; }
+
+  el.classList.add('soil', tile.crop);
+  if (tile.watered) el.classList.add('watered');
+  el.classList.add(tile.state); // sprout/growing/ready
+}
+
+// Determine tile state from progress
+function updateTileState(tile) {
+  if (!tile.crop) return;
+  const crop = CROPS[tile.crop];
+  const eff = crop.time * (tile.watered ? 0.7 : 1);
+  if (tile.progress >= eff) tile.state = 'ready';
+  else if (tile.progress >= eff / 2) tile.state = 'growing';
+  else tile.state = 'sprout';
+}
+
+function resizeField(newW, newH) {
+  const newTiles = new Array(newW * newH).fill(null)
+    .map(() => ({ state: 'empty', crop: null, progress: 0, watered: false }));
+  for (let y = 0; y < newH; y++) {
+    for (let x = 0; x < newW; x++) {
+      if (x < fieldWidth && y < fieldHeight) {
+        newTiles[y * newW + x] = tiles[y * fieldWidth + x] || { state:'empty', crop:null, progress:0, watered:false };
+      }
+    }
+  }
+  fieldWidth = newW;
+  fieldHeight = newH;
+  tiles = newTiles;
+  createField();
+}
+
+/* ===================== Tile Interaction ===================== */
+
+// Click handler respecting current tool
+function handleTileClick(i) {
+  const tile = tiles[i];
+
+  switch (currentTool) {
+    case 'dig':
+      if (tile.state === 'empty') {
+        tile.state = 'soil';
+        addLog('Dug soil');
+        renderTile(i);
+      }
+      break;
+
+    case 'plant_wheat':
+      if (tile.state === 'soil' && seeds.wheat > 0) {
+        seeds.wheat--;
+        tile.state = 'sprout';
+        tile.crop  = 'wheat';
+        tile.progress = 0;
+        tile.watered = false;
+        addLog('Planted wheat');
+        renderTile(i);
+        updateStats();
+      }
+      break;
+
+    case 'plant_carrot':
+      if (tile.state === 'soil' && seeds.carrot > 0) {
+        seeds.carrot--;
+        tile.state = 'sprout';
+        tile.crop  = 'carrot';
+        tile.progress = 0;
+        tile.watered = false;
+        addLog('Planted carrot');
+        renderTile(i);
+        updateStats();
+      }
+      break;
+
+    case 'plant_potato':
+      if (tile.state === 'soil' && seeds.potato > 0) {
+        seeds.potato--;
+        tile.state = 'sprout';
+        tile.crop  = 'potato';
+        tile.progress = 0;
+        tile.watered = false;
+        addLog('Planted potato');
+        renderTile(i);
+        updateStats();
+      }
+      break;
+
+    case 'plant_corn':
+      if (tile.state === 'soil' && seeds.corn > 0) {
+        seeds.corn--;
+        tile.state = 'sprout';
+        tile.crop  = 'corn';
+        tile.progress = 0;
+        tile.watered = false;
+        addLog('Planted corn');
+        renderTile(i);
+        updateStats();
+      }
+      break;
+
+    case 'plant_berry':
+      if (tile.state === 'soil' && seeds.berry > 0) {
+        seeds.berry--;
+        tile.state = 'sprout';
+        tile.crop  = 'berry';
+        tile.progress = 0;
+        tile.watered = false;
+        addLog('Planted berry');
+        renderTile(i);
+        updateStats();
+      }
+      break;
+
+    case 'plant_grape':
+      if (tile.state === 'soil' && seeds.grape > 0) {
+        seeds.grape--;
+        tile.state = 'sprout';
+        tile.crop  = 'grape';
+        tile.progress = 0;
+        tile.watered = false;
+        addLog('Planted grape');
+        renderTile(i);
+        updateStats();
+      }
+      break;
+
+    case 'harvest':
+      if (tile.state === 'ready') {
+        coins += CROPS[tile.crop].sell;
+        addLog(`Harvested ${tile.crop} for ${CROPS[tile.crop].sell} coins`);
+        if (CROPS[tile.crop].recur) {
+          tile.state = 'sprout';
+          tile.progress = 0;
+          tile.watered = false;
+        } else {
+          tile.state = 'soil';
+          tile.crop  = null;
+          tile.progress = 0;
+          tile.watered = false;
+        }
+        renderTile(i);
+        updateStats();
+      }
+      break;
+
+    case 'fertilize':
+      if (tile.crop && tile.state !== 'ready' && coins >= 4) {
+        coins -= 4;
+        const crop = CROPS[tile.crop];
+        tile.progress += crop.time * 0.3;
+        addLog(`Fertilized ${tile.crop}`);
+        updateTileState(tile);
+        renderTile(i);
+        updateStats();
+      }
+      break;
+
+    case 'water':
+      if (tile.crop && tile.state !== 'ready' && !tile.watered) {
+        tile.watered = true;
+        addLog(`Watered ${tile.crop}`);
+        renderTile(i);
+      }
+      break;
+
+    case 'clear':
+      if (tile.crop) {
+        tile.state = 'soil';
+        tile.crop = null;
+        tile.progress = 0;
+        tile.watered = false;
+        addLog('Cleared crop');
+        renderTile(i);
+      } else if (tile.state === 'soil') {
+        tile.state = 'empty';
+        addLog('Cleared soil');
+        renderTile(i);
+      }
+      break;
+  }
+}
+
+/* ===================== Game Loop ===================== */
+
+// Advance growth and clock every second
+function tick() {
+  gameTime++;
+  clockEl.textContent = formatTime(gameTime);
+
+  tiles.forEach((tile, i) => {
+    if (tile.crop && tile.state !== 'ready') {
+      tile.progress++;
+      const prev = tile.state;
+      updateTileState(tile);
+      if (prev !== tile.state) renderTile(i);
+    }
+  });
+}
+
+// Sell every ready crop in the field
+function sellAll() {
+  let earned = 0;
+  tiles.forEach((tile, i) => {
+    if (tile.state === 'ready') {
+      earned += CROPS[tile.crop].sell;
+      if (CROPS[tile.crop].recur) {
+        tile.state = 'sprout';
+        tile.progress = 0;
+        tile.watered = false;
+      } else {
+        tile.state = 'soil';
+        tile.crop = null;
+        tile.progress = 0;
+        tile.watered = false;
+      }
+      renderTile(i);
+    }
+  });
+  if (earned > 0) {
+    coins += earned;
+    addLog(`Sold crops for ${earned} coins`);
+    updateStats();
+  }
+}
+
+/* ===================== Shop & Toolbar ===================== */
+
+// Highlight selected tool
+function setTool(tool) {
+  currentTool = tool;
+  document.querySelectorAll('.toolbar button')
+          .forEach(btn => btn.classList.remove('active'));
+  const map = {
+    dig:'digBtn',
+    plant_wheat:'plantWBtn',
+    plant_carrot:'plantCBtn',
+    plant_potato:'plantPoBtn',
+    plant_corn:'plantCoBtn',
+    plant_berry:'plantBBtn',
+    plant_grape:'plantGBtn',
+    harvest:'harvestBtn',
+    fertilize:'fertBtn',
+    water:'waterBtn',
+    clear:'clearBtn'
+  };
+  document.getElementById(map[tool]).classList.add('active');
+}
+
+// Buy seeds
+function buySeed(type) {
+  const cost = CROPS[type].seedCost;
+  if (coins >= cost) {
+    coins -= cost;
+    seeds[type]++;
+    addLog(`Bought ${type} seed`);
+    updateStats();
+  }
+}
+
+function buyRow() {
+  if (fieldHeight < 10 && coins >= rowCost) {
+    coins -= rowCost;
+    rowCost += 10;
+    resizeField(fieldWidth, fieldHeight + 1);
+    addLog('Bought new row');
+    updateStats();
+  }
+}
+
+function buyCol() {
+  if (fieldWidth < 10 && coins >= colCost) {
+    coins -= colCost;
+    colCost += 10;
+    resizeField(fieldWidth + 1, fieldHeight);
+    addLog('Bought new column');
+    updateStats();
+  }
+}
+
+/* ===================== Saving & Loading ===================== */
+
+// Save state to localStorage
+function saveGame() {
+  const data = { coins, seeds, tiles, gameTime, fieldWidth, fieldHeight, rowCost, colCost };
+  localStorage.setItem('farmSave', JSON.stringify(data));
+  addLog('Game saved');
+}
+
+// Load state from localStorage or set defaults
+function loadGame() {
+  const data = localStorage.getItem('farmSave');
+  if (data) {
+    const obj = JSON.parse(data);
+    coins = obj.coins;
+    seeds = obj.seeds || {};
+    ['wheat','carrot','potato','corn','berry','grape'].forEach(c => { seeds[c] = seeds[c] || 0; });
+    tiles = obj.tiles || [];
+    tiles.forEach(t => { if (t.watered === undefined) t.watered = false; });
+    gameTime = obj.gameTime || 0;
+    fieldWidth = obj.fieldWidth || 3;
+    fieldHeight = obj.fieldHeight || 3;
+    rowCost = obj.rowCost || 20;
+    colCost = obj.colCost || 20;
+    addLog('Loaded saved game');
+  } else {
+    tiles = new Array(fieldWidth * fieldHeight).fill()
+      .map(() => ({ state:'empty', crop:null, progress:0, watered:false }));
+    addLog('Started new farm');
+  }
+}
+
+// Hard reset: wipe save and reload
+function resetGame() {
+  if (confirm('Reset your farm?')) {
+    localStorage.removeItem('farmSave');
+    location.reload();
+  }
+}
+
+/* ===================== Initialization ===================== */
+loadGame();
+createField();
+updateStats();
+clockEl.textContent = formatTime(gameTime);
+
+document.getElementById('digBtn').onclick    = () => setTool('dig');
+document.getElementById('plantWBtn').onclick = () => setTool('plant_wheat');
+document.getElementById('plantCBtn').onclick = () => setTool('plant_carrot');
+document.getElementById('plantPoBtn').onclick= () => setTool('plant_potato');
+document.getElementById('plantCoBtn').onclick= () => setTool('plant_corn');
+document.getElementById('plantBBtn').onclick = () => setTool('plant_berry');
+document.getElementById('plantGBtn').onclick = () => setTool('plant_grape');
+document.getElementById('harvestBtn').onclick= () => setTool('harvest');
+document.getElementById('fertBtn').onclick   = () => setTool('fertilize');
+document.getElementById('waterBtn').onclick  = () => setTool('water');
+document.getElementById('clearBtn').onclick  = () => setTool('clear');
+document.getElementById('sellBtn').onclick   = sellAll;
+document.querySelectorAll('.shop-item[data-crop]').forEach(item => {
+  item.addEventListener('click', () => buySeed(item.dataset.crop));
+});
+rowItem.onclick = buyRow;
+colItem.onclick = buyCol;
+document.getElementById('resetBtn').onclick  = resetGame;
+setTool('dig'); // default selected tool
+
+setInterval(tick, 1000);       // growth/clock
+setInterval(saveGame, 30000);  // autosave every 30s
+</script>
+</body>
+</html>
